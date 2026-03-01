@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>生字部件 實體圖片縮小器</title>
+    <style>
+        body { font-family: sans-serif; background-color: #2c3e50; color: white; text-align: center; padding: 20px; }
+        .container { background-color: #34495e; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        h2 { margin-top: 0; color: #f1c40f; }
+        .upload-btn { margin: 20px 0; }
+        /* 這裡是透明畫布，模擬正方形的圖片範圍 */
+        canvas { 
+            border: 2px dashed #7f8c8d; 
+            background-image: linear-gradient(45deg, #bdc3c7 25%, transparent 25%), linear-gradient(-45deg, #bdc3c7 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #bdc3c7 75%), linear-gradient(-45deg, transparent 75%, #bdc3c7 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #ecf0f1;
+            display: block; margin: 0 auto;
+        }
+        .slider-container { margin: 20px 0; }
+        input[type=range] { width: 300px; }
+        .download-btn { background-color: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .download-btn:hover { background-color: #2ecc71; }
+        p.tip { color: #bdc3c7; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🪄 實體圖片縮小器 (免改程式碼)</h2>
+    <p class="tip">把原本太大的部件變小，並保留透明背景，下載後直接覆蓋舊圖！</p>
+    
+    <div class="upload-btn">
+        <input type="file" id="upload" accept="image/png">
+    </div>
+
+    <canvas id="canvas" width="300" height="300"></canvas>
+
+    <div class="slider-container">
+        <label>調整實體大小：<span id="scaleValue">100%</span></label><br>
+        <input type="range" id="scaleSlider" min="0.1" max="1.5" step="0.05" value="1">
+    </div>
+
+    <button class="download-btn" id="downloadBtn">⬇️ 下載縮小後的新圖片</button>
+</div>
+
+<script>
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const scaleValue = document.getElementById('scaleValue');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let currentImage = null;
+    let originalFileName = "new_image.png";
+
+    // 處理圖片上傳
+    upload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        originalFileName = file.name; // 記住原本的檔名
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                currentImage = img;
+                scaleSlider.value = 1; // 重置比例
+                drawImage(1);
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    });
+
+    // 處理滑桿拖動
+    scaleSlider.addEventListener('input', function(e) {
+        const scale = parseFloat(e.target.value);
+        scaleValue.innerText = Math.round(scale * 100) + '%';
+        if (currentImage) {
+            drawImage(scale);
+        }
+    });
+
+    // 將圖片畫到畫布正中央
+    function drawImage(scale) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空畫布
+        
+        // 為了避免原圖太大超過畫布，先算一個基礎縮放比例
+        const baseScale = Math.min(canvas.width / currentImage.width, canvas.height / currentImage.height);
+        
+        const finalWidth = currentImage.width * baseScale * scale;
+        const finalHeight = currentImage.height * baseScale * scale;
+        
+        const x = (canvas.width - finalWidth) / 2;
+        const y = (canvas.height - finalHeight) / 2;
+        
+        ctx.drawImage(currentImage, x, y, finalWidth, finalHeight);
+    }
+
+    // 處理下載
+    downloadBtn.addEventListener('click', function() {
+        if (!currentImage) {
+            alert('請先上傳圖片！');
+            return;
+        }
+        // 將畫布轉成透明的 PNG
+        const dataURL = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = originalFileName; // 使用原本的檔名下載
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+</script>
+
+</body>
+</html>
