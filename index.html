@@ -2,115 +2,251 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>生字部件 實體圖片縮小器</title>
+    <title>生字部件 實體圖片縮小器 4.0 (超大螢幕版)</title>
     <style>
-        body { font-family: sans-serif; background-color: #2c3e50; color: white; text-align: center; padding: 20px; }
-        .container { background-color: #34495e; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        body { font-family: sans-serif; background-color: #2c3e50; color: white; text-align: center; padding: 20px; margin: 0;}
+        .container { background-color: #34495e; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 1200px; }
         h2 { margin-top: 0; color: #f1c40f; }
-        .upload-btn { margin: 20px 0; }
-        /* 這裡是透明畫布，模擬正方形的圖片範圍 */
-        canvas { 
-            border: 2px dashed #7f8c8d; 
-            background-image: linear-gradient(45deg, #bdc3c7 25%, transparent 25%), linear-gradient(-45deg, #bdc3c7 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #bdc3c7 75%), linear-gradient(-45deg, transparent 75%, #bdc3c7 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-            background-color: #ecf0f1;
-            display: block; margin: 0 auto;
+        .upload-btn { margin: 15px 0; background: #2c3e50; padding: 15px; border-radius: 8px;}
+        
+        .workspace-wrapper { display: flex; justify-content: center; gap: 40px; align-items: flex-start; margin-top: 20px; }
+        
+        /* 超大版的米字拼圖預覽區 (600x600) */
+        #preview-box {
+            width: 600px; 
+            height: 600px;
+            border: 3px solid #bdc3c7;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            /* 完美的米字輔助線 (調整為更細緻的比例) */
+            background-image: 
+                linear-gradient(90deg, transparent 49.7%, #e0e0e0 49.7%, #e0e0e0 50.3%, transparent 50.3%),
+                linear-gradient(0deg, transparent 49.7%, #e0e0e0 49.7%, #e0e0e0 50.3%, transparent 50.3%),
+                linear-gradient(45deg, transparent 49.7%, #f5f5f5 49.7%, #f5f5f5 50.3%, transparent 50.3%),
+                linear-gradient(-45deg, transparent 49.7%, #f5f5f5 49.7%, #f5f5f5 50.3%, transparent 50.3%);
         }
-        .slider-container { margin: 20px 0; }
-        input[type=range] { width: 300px; }
-        .download-btn { background-color: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .download-btn:hover { background-color: #2ecc71; }
-        p.tip { color: #bdc3c7; font-size: 14px; }
+
+        .part-img {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            box-shadow: none;
+            transition: box-shadow 0.1s;
+        }
+        .part-img:active { cursor: grabbing; }
+        
+        /* 被選取的圖片發出明顯紅光 */
+        .part-img.active {
+            box-shadow: 0 0 0 3px #e74c3c, 0 0 15px rgba(231, 76, 60, 0.8);
+            z-index: 100 !important;
+            border-radius: 4px;
+        }
+
+        .control-panel {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 8px;
+            width: 350px;
+            text-align: left;
+        }
+
+        .slider-container { margin: 20px 0; background: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d;}
+        input[type=range] { width: 100%; cursor: pointer; margin-top: 10px; }
+        
+        .download-btn { background-color: #27ae60; color: white; border: none; padding: 15px; font-size: 18px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; transition: 0.2s;}
+        .download-btn:hover { background-color: #2ecc71; transform: scale(1.02);}
+        .download-btn:disabled { background-color: #7f8c8d; cursor: not-allowed; transform: none;}
+        
+        p.tip { color: #bdc3c7; font-size: 14px; text-align: left; line-height: 1.5; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🪄 實體圖片縮小器 (免改程式碼)</h2>
-    <p class="tip">把原本太大的部件變小，並保留透明背景，下載後直接覆蓋舊圖！</p>
+    <h2>🎯 實體圖片縮小器 4.0 (超大螢幕版)</h2>
     
     <div class="upload-btn">
-        <input type="file" id="upload" accept="image/png">
+        <label style="font-size: 18px; color: #3498db;"><b>📂 第 1 步：請一次框選該字的所有部件上傳</b></label><br><br>
+        <input type="file" id="upload" accept="image/png" multiple style="font-size: 16px;">
     </div>
 
-    <canvas id="canvas" width="300" height="300"></canvas>
+    <div class="workspace-wrapper">
+        <div>
+            <h4 style="margin:0 0 10px 0; color:#ecf0f1; text-align: center;">👀 超大米字預覽區 (600x600)</h4>
+            <div id="preview-box"></div>
+        </div>
 
-    <div class="slider-container">
-        <label>調整實體大小：<span id="scaleValue">100%</span></label><br>
-        <input type="range" id="scaleSlider" min="0.1" max="1.5" step="0.05" value="1">
+        <div class="control-panel">
+            <h4 style="margin:0 0 10px 0; color:#f1c40f;">🎛️ 第 2 步：調整與下載</h4>
+            <p class="tip">請先在左邊「<b>點擊</b>」您想修改的部件（選中會亮紅框）。<br>拖曳圖片可看拼裝效果。</p>
+            
+            <div class="slider-container">
+                <div style="margin-bottom: 10px; color: #ecf0f1; font-weight: bold;" id="selectedFileName">目前未選擇任何部件</div>
+                <label style="color: #f1c40f;">縮放比例：<span id="scaleValue">100%</span></label><br>
+                <input type="range" id="scaleSlider" min="0.1" max="1.5" step="0.02" value="1" disabled>
+            </div>
+
+            <button class="download-btn" id="downloadBtn" disabled>⬇️ 下載已選取的部件</button>
+            <p class="tip" style="margin-top:15px; font-size: 13px; color:#e74c3c; font-weight: bold;">
+                * 貼心提醒：下載的圖片會自動回到「正中央透明背景」，您在左邊預覽區的拖曳位置不會影響下載檔案的位置喔！
+            </p>
+        </div>
     </div>
-
-    <button class="download-btn" id="downloadBtn">⬇️ 下載縮小後的新圖片</button>
 </div>
 
 <script>
     const upload = document.getElementById('upload');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const previewBox = document.getElementById('preview-box');
     const scaleSlider = document.getElementById('scaleSlider');
     const scaleValue = document.getElementById('scaleValue');
     const downloadBtn = document.getElementById('downloadBtn');
+    const selectedFileName = document.getElementById('selectedFileName');
 
-    let currentImage = null;
-    let originalFileName = "new_image.png";
+    let activeImg = null;
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+    let zIndexCounter = 1;
 
-    // 處理圖片上傳
+    // 處理多圖片上傳
     upload.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        originalFileName = file.name; // 記住原本的檔名
-        const reader = new FileReader();
-        
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                currentImage = img;
-                scaleSlider.value = 1; // 重置比例
-                drawImage(1);
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        previewBox.innerHTML = ''; 
+        activeImg = null;
+        updateUI();
+
+        files.sort((a, b) => a.name.localeCompare(b.name));
+
+        let startPosX = 40;
+        let startPosY = 40;
+
+        files.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imgObj = new Image();
+                imgObj.onload = function() {
+                    const imgEl = document.createElement('img');
+                    imgEl.src = imgObj.src;
+                    imgEl.className = 'part-img';
+                    imgEl.setAttribute('draggable', 'false'); 
+                    
+                    // 計算基礎比例：對應新的 600x600 空間
+                    const baseScale = Math.min(600 / imgObj.width, 600 / imgObj.height) * 0.8;
+                    
+                    imgEl.dataset.filename = file.name;
+                    imgEl.dataset.baseScale = baseScale; 
+                    imgEl.dataset.userScale = 1.0;       
+                    imgEl.originalImage = imgObj; 
+
+                    imgEl.style.width = (imgObj.width * baseScale) + 'px';
+                    imgEl.style.height = (imgObj.height * baseScale) + 'px';
+
+                    // 初始位置錯開
+                    imgEl.style.left = startPosX + 'px';
+                    imgEl.style.top = startPosY + 'px';
+                    imgEl.style.zIndex = zIndexCounter++;
+
+                    // 點擊與拖曳事件
+                    imgEl.addEventListener('mousedown', function(evt) {
+                        setActiveImage(this);
+                        isDragging = true;
+                        startX = evt.clientX;
+                        startY = evt.clientY;
+                        initialLeft = parseFloat(this.style.left) || 0;
+                        initialTop = parseFloat(this.style.top) || 0;
+                        this.style.zIndex = zIndexCounter++; 
+                    });
+
+                    previewBox.appendChild(imgEl);
+                    
+                    startPosX += 60;
+                    startPosY += 60;
+                    if(startPosX > 300) { startPosX = 40; startPosY = 40; }
+                }
+                imgObj.src = event.target.result;
             }
-            img.src = event.target.result;
-        }
-        reader.readAsDataURL(file);
+            reader.readAsDataURL(file);
+        });
     });
 
-    // 處理滑桿拖動
-    scaleSlider.addEventListener('input', function(e) {
-        const scale = parseFloat(e.target.value);
-        scaleValue.innerText = Math.round(scale * 100) + '%';
-        if (currentImage) {
-            drawImage(scale);
-        }
+    document.addEventListener('mousemove', function(event) {
+        if (!isDragging || !activeImg) return; 
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        activeImg.style.left = (initialLeft + dx) + 'px';
+        activeImg.style.top = (initialTop + dy) + 'px';
     });
 
-    // 將圖片畫到畫布正中央
-    function drawImage(scale) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空畫布
-        
-        // 為了避免原圖太大超過畫布，先算一個基礎縮放比例
-        const baseScale = Math.min(canvas.width / currentImage.width, canvas.height / currentImage.height);
-        
-        const finalWidth = currentImage.width * baseScale * scale;
-        const finalHeight = currentImage.height * baseScale * scale;
-        
-        const x = (canvas.width - finalWidth) / 2;
-        const y = (canvas.height - finalHeight) / 2;
-        
-        ctx.drawImage(currentImage, x, y, finalWidth, finalHeight);
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
+
+    function setActiveImage(imgEl) {
+        document.querySelectorAll('.part-img').forEach(el => el.classList.remove('active'));
+        imgEl.classList.add('active');
+        activeImg = imgEl;
+        updateUI();
     }
 
-    // 處理下載
-    downloadBtn.addEventListener('click', function() {
-        if (!currentImage) {
-            alert('請先上傳圖片！');
-            return;
+    function updateUI() {
+        if (activeImg) {
+            scaleSlider.disabled = false;
+            downloadBtn.disabled = false;
+            scaleSlider.value = activeImg.dataset.userScale;
+            scaleValue.innerText = Math.round(activeImg.dataset.userScale * 100) + '%';
+            selectedFileName.innerText = "👉 目前選擇：" + activeImg.dataset.filename;
+            selectedFileName.style.color = "#2ecc71";
+        } else {
+            scaleSlider.disabled = true;
+            downloadBtn.disabled = true;
+            scaleSlider.value = 1;
+            scaleValue.innerText = "100%";
+            selectedFileName.innerText = "目前未選擇任何部件";
+            selectedFileName.style.color = "#ecf0f1";
         }
-        // 將畫布轉成透明的 PNG
-        const dataURL = canvas.toDataURL('image/png');
+    }
+
+    scaleSlider.addEventListener('input', function(e) {
+        if (!activeImg) return;
+        const userScale = parseFloat(e.target.value);
+        activeImg.dataset.userScale = userScale;
+        
+        const baseScale = parseFloat(activeImg.dataset.baseScale);
+        const imgObj = activeImg.originalImage;
+        activeImg.style.width = (imgObj.width * baseScale * userScale) + 'px';
+        activeImg.style.height = (imgObj.height * baseScale * userScale) + 'px';
+        
+        scaleValue.innerText = Math.round(userScale * 100) + '%';
+    });
+
+    downloadBtn.addEventListener('click', function() {
+        if (!activeImg) return;
+
+        // 下載的畫布也同步升級到 600x600 保持高畫質
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 600;
+        tempCanvas.height = 600;
+        const ctx = tempCanvas.getContext('2d');
+
+        const imgObj = activeImg.originalImage;
+        const baseScale = parseFloat(activeImg.dataset.baseScale);
+        const userScale = parseFloat(activeImg.dataset.userScale);
+
+        const finalWidth = imgObj.width * baseScale * userScale;
+        const finalHeight = imgObj.height * baseScale * userScale;
+        
+        const x = (600 - finalWidth) / 2;
+        const y = (600 - finalHeight) / 2;
+
+        ctx.drawImage(imgObj, x, y, finalWidth, finalHeight);
+
+        const dataURL = tempCanvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = dataURL;
-        a.download = originalFileName; // 使用原本的檔名下載
+        a.download = activeImg.dataset.filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
