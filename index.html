@@ -2,25 +2,26 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>生字部件 實體圖片縮小器 4.0 (超大螢幕版)</title>
+    <title>生字部件 實體圖片縮小器 4.0 (極致大螢幕版)</title>
     <style>
         body { font-family: sans-serif; background-color: #2c3e50; color: white; text-align: center; padding: 20px; margin: 0;}
-        .container { background-color: #34495e; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 1200px; }
+        /* 加大容器寬度 */
+        .container { background-color: #34495e; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 1400px; }
         h2 { margin-top: 0; color: #f1c40f; }
         .upload-btn { margin: 15px 0; background: #2c3e50; padding: 15px; border-radius: 8px;}
         
         .workspace-wrapper { display: flex; justify-content: center; gap: 40px; align-items: flex-start; margin-top: 20px; }
         
-        /* 超大版的米字拼圖預覽區 (600x600) */
+        /* 升級版的米字拼圖預覽區 (800x800) */
         #preview-box {
-            width: 600px; 
-            height: 600px;
+            width: 800px; 
+            height: 800px;
             border: 3px solid #bdc3c7;
             background-color: #ffffff;
             position: relative;
             overflow: hidden;
             border-radius: 8px;
-            /* 完美的米字輔助線 (調整為更細緻的比例) */
+            /* 輔助線同步更新 */
             background-image: 
                 linear-gradient(90deg, transparent 49.7%, #e0e0e0 49.7%, #e0e0e0 50.3%, transparent 50.3%),
                 linear-gradient(0deg, transparent 49.7%, #e0e0e0 49.7%, #e0e0e0 50.3%, transparent 50.3%),
@@ -37,7 +38,6 @@
         }
         .part-img:active { cursor: grabbing; }
         
-        /* 被選取的圖片發出明顯紅光 */
         .part-img.active {
             box-shadow: 0 0 0 3px #e74c3c, 0 0 15px rgba(231, 76, 60, 0.8);
             z-index: 100 !important;
@@ -65,7 +65,7 @@
 <body>
 
 <div class="container">
-    <h2>🎯 實體圖片縮小器 4.0 (超大螢幕版)</h2>
+    <h2>🎯 實體圖片縮小器 4.0 (極致大螢幕版)</h2>
     
     <div class="upload-btn">
         <label style="font-size: 18px; color: #3498db;"><b>📂 第 1 步：請一次框選該字的所有部件上傳</b></label><br><br>
@@ -74,7 +74,7 @@
 
     <div class="workspace-wrapper">
         <div>
-            <h4 style="margin:0 0 10px 0; color:#ecf0f1; text-align: center;">👀 超大米字預覽區 (600x600)</h4>
+            <h4 style="margin:0 0 10px 0; color:#ecf0f1; text-align: center;">👀 極致大米字預覽區 (800x800)</h4>
             <div id="preview-box"></div>
         </div>
 
@@ -90,7 +90,7 @@
 
             <button class="download-btn" id="downloadBtn" disabled>⬇️ 下載已選取的部件</button>
             <p class="tip" style="margin-top:15px; font-size: 13px; color:#e74c3c; font-weight: bold;">
-                * 貼心提醒：下載的圖片會自動回到「正中央透明背景」，您在左邊預覽區的拖曳位置不會影響下載檔案的位置喔！
+                * 貼心提醒：下載的圖會自動置中在 800x800 的畫布上輸出。
             </p>
         </div>
     </div>
@@ -109,7 +109,6 @@
     let startX, startY, initialLeft, initialTop;
     let zIndexCounter = 1;
 
-    // 處理多圖片上傳
     upload.addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
@@ -120,8 +119,8 @@
 
         files.sort((a, b) => a.name.localeCompare(b.name));
 
-        let startPosX = 40;
-        let startPosY = 40;
+        let startPosX = 50;
+        let startPosY = 50;
 
         files.forEach((file) => {
             const reader = new FileReader();
@@ -133,8 +132,8 @@
                     imgEl.className = 'part-img';
                     imgEl.setAttribute('draggable', 'false'); 
                     
-                    // 計算基礎比例：對應新的 600x600 空間
-                    const baseScale = Math.min(600 / imgObj.width, 600 / imgObj.height) * 0.8;
+                    // 基準比例調整為對應 800x800
+                    const baseScale = Math.min(800 / imgObj.width, 800 / imgObj.height) * 0.8;
                     
                     imgEl.dataset.filename = file.name;
                     imgEl.dataset.baseScale = baseScale; 
@@ -144,12 +143,10 @@
                     imgEl.style.width = (imgObj.width * baseScale) + 'px';
                     imgEl.style.height = (imgObj.height * baseScale) + 'px';
 
-                    // 初始位置錯開
                     imgEl.style.left = startPosX + 'px';
                     imgEl.style.top = startPosY + 'px';
                     imgEl.style.zIndex = zIndexCounter++;
 
-                    // 點擊與拖曳事件
                     imgEl.addEventListener('mousedown', function(evt) {
                         setActiveImage(this);
                         isDragging = true;
@@ -164,7 +161,7 @@
                     
                     startPosX += 60;
                     startPosY += 60;
-                    if(startPosX > 300) { startPosX = 40; startPosY = 40; }
+                    if(startPosX > 400) { startPosX = 50; startPosY = 50; }
                 }
                 imgObj.src = event.target.result;
             }
@@ -225,10 +222,9 @@
     downloadBtn.addEventListener('click', function() {
         if (!activeImg) return;
 
-        // 下載的畫布也同步升級到 600x600 保持高畫質
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = 600;
-        tempCanvas.height = 600;
+        tempCanvas.width = 800; // 同步加大輸出畫布
+        tempCanvas.height = 800;
         const ctx = tempCanvas.getContext('2d');
 
         const imgObj = activeImg.originalImage;
@@ -238,8 +234,8 @@
         const finalWidth = imgObj.width * baseScale * userScale;
         const finalHeight = imgObj.height * baseScale * userScale;
         
-        const x = (600 - finalWidth) / 2;
-        const y = (600 - finalHeight) / 2;
+        const x = (800 - finalWidth) / 2;
+        const y = (800 - finalHeight) / 2;
 
         ctx.drawImage(imgObj, x, y, finalWidth, finalHeight);
 
